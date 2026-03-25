@@ -1,0 +1,30 @@
+.git
+.github
+.gitignore
+.dockerignore
+docker-compose.yml
+Readme.md
+LICENSE
+*.md
+
+# Dependencies (will be installed inside container)
+node_modules
+vendor
+
+# IDE
+.idea
+.vscode
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker volumes
+mysql_data
+redis_data
+
+# Storage (keep structure but ignore content)
+storage/logs/*
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
