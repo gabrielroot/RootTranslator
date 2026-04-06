@@ -10,6 +10,8 @@ services:
         NODE_VERSION: ${NODE_VERSION:-22}
     container_name: ${APP_NAME:-laravel}_app
     restart: unless-stopped
+    ports:
+      - "5173:5173"
     volumes:
       - .:/var/www
     networks:
