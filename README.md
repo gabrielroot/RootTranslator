@@ -1,3 +1,5 @@
+<p align="center"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Home screenshot"></p>
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
@@ -7,52 +9,164 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-## About Laravel
+# Laravel Docker Development Environment
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Ambiente de desenvolvimento Docker completo para Laravel.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 📦 Stack
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Serviço     | Versão    | Porta  |
+|-------------|-----------|--------|
+| PHP-FPM     | 8.4       | 9000   |
+| Nginx       | Alpine    | 80     |
+| MySQL       | 8.4       | 3306   |
+| Redis       | 7 Alpine  | 6379   |
+| Node.js     | 22        | —      |
+| phpMyAdmin  | latest    | 8080   |
+| Mailpit     | latest    | 8025   |
 
-## Learning Laravel
+## 🚀 Quick Start
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### 1. Criar o projeto Laravel
 
 ```bash
-composer require laravel/boost --dev
+# Build das imagens
+docker compose build
 
-php artisan boost:install
+# Criar projeto Laravel (primeira vez)
+docker compose run --rm app composer create-project laravel/laravel .
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### 2. Configurar o `.env` do Laravel
 
-## Contributing
+Edite o arquivo `.env` gerado pelo Laravel com as configurações do Docker:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```env
+DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=laravel
+DB_USERNAME=laravel
+DB_PASSWORD=secret
 
-## Code of Conduct
+CACHE_STORE=redis
+SESSION_DRIVER=redis
+QUEUE_CONNECTION=redis
+REDIS_HOST=redis
+REDIS_PORT=6379
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+MAIL_MAILER=smtp
+MAIL_HOST=mailpit
+MAIL_PORT=1025
+```
 
-## Security Vulnerabilities
+### 3. Subir o ambiente
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+# Subir containers principais
+make up
 
-## License
+# Ou com ferramentas extras (phpMyAdmin + Mailpit)
+make up-tools
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### 4. Instalar dependências e configurar
+
+```bash
+make install
+```
+
+Acesse: **http://localhost**
+
+## 📋 Comandos Úteis
+
+```bash
+make help              # Ver todos os comandos disponíveis
+
+# Docker
+make up                # Subir containers
+make down              # Parar containers
+make build             # Rebuild dos containers
+make logs s=app        # Ver logs (app, nginx, mysql, redis)
+make ps                # Ver containers rodando
+
+# Acesso
+make shell             # Acessar shell do container PHP
+make mysql             # Acessar MySQL CLI
+make redis             # Acessar Redis CLI
+
+# Laravel
+make artisan c="migrate"              # Rodar Artisan
+make composer c="require package"     # Rodar Composer
+make npm c="run dev"                  # Rodar npm
+
+# Testes
+make test              # Rodar testes
+make test-coverage     # Testes com cobertura
+make lint              # Code style (Pint)
+
+# Manutenção
+make fresh             # Reset do banco + seed
+make cache             # Limpar caches
+make optimize          # Otimizar aplicação
+make permissions       # Corrigir permissões
+make destroy           # Destruir tudo (CUIDADO!)
+```
+
+## 🗂 Estrutura Docker
+
+```
+.
+├── docker/
+│   ├── php/
+│   │   ├── Dockerfile        # Imagem PHP com extensões
+│   │   ├── php.ini           # Configurações PHP customizadas
+│   │   └── entrypoint.sh     # Script de inicialização
+│   └── nginx/
+│       └── default.conf      # Configuração do Nginx
+├── docker-compose.yml        # Orquestração dos serviços
+├── .env.docker               # Variáveis do Docker
+├── .dockerignore             # Arquivos ignorados no build
+└── Makefile                  # Atalhos de comandos
+```
+
+## ⚙️ Personalização
+
+### Alterar portas
+
+Edite o arquivo `.env.docker` (ou `.env` na raiz):
+
+```env
+APP_PORT=8000       # Porta do Nginx (default: 80)
+DB_PORT=33060       # Porta do MySQL (default: 3306)
+REDIS_PORT=63790    # Porta do Redis (default: 6379)
+PMA_PORT=8081       # Porta do phpMyAdmin (default: 8080)
+```
+
+### Usar PostgreSQL em vez de MySQL
+
+Basta trocar o serviço `mysql` no `docker-compose.yml` por:
+
+```yaml
+postgres:
+  image: postgres:17-alpine
+  environment:
+    POSTGRES_DB: ${DB_DATABASE:-laravel}
+    POSTGRES_USER: ${DB_USERNAME:-laravel}
+    POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+  volumes:
+    - postgres_data:/var/lib/postgresql/data
+```
+
+O driver `pdo_pgsql` já está instalado no Dockerfile.
+
+## 📧 Mailpit
+
+Quando o profile `tools` estiver ativo, o Mailpit captura todos os e-mails enviados pela aplicação.
+
+- **Dashboard:** http://localhost:8025
+- **SMTP:** mailpit:1025
+
+## 🔒 Importante
+
+Este setup é **exclusivo para desenvolvimento**. Não use em produção sem as devidas adaptações de segurança.
