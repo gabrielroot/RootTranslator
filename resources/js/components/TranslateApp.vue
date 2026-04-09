@@ -73,11 +73,32 @@
             </div>
             <div class="textarea-wrapper">
               <textarea 
-                v-model="translated" 
+                :value="getDisplayedTranslation()" 
                 class="textarea output-textarea" 
                 placeholder="Tradução aparecerá aqui..."
                 readonly
               ></textarea>
+              
+              <!-- Alternative circles -->
+              <transition name="fade">
+                <div v-if="alternatives.length > 0" class="alternatives-container">
+                  <button 
+                    v-for="(alt, index) in 3" 
+                    :key="index"
+                    @click="selectAlternative(index)"
+                    class="alternative-circle"
+                    :class="{ 
+                      'active': currentAlternativeIndex === index,
+                      'disabled': index >= alternatives.length 
+                    }"
+                    :disabled="index >= alternatives.length"
+                    :title="index < alternatives.length ? alternatives[index] : 'Sem alternativa'"
+                  >
+                    {{ index + 1 }}
+                  </button>
+                </div>
+              </transition>
+              
               <transition name="fade">
                 <button v-if="translated" @click="copyToClipboard" class="copy-btn" title="Copiar">
                   <svg v-if="!copied" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -155,6 +176,8 @@ const error = ref('')
 const languages = ref([])
 const isDark = ref(false)
 const copied = ref(false)
+const alternatives = ref([])
+const currentAlternativeIndex = ref(-1) // -1 = texto principal
 
 
 onMounted(() => {
@@ -213,13 +236,15 @@ function swapLanguages() {
   const tempText = text.value
   from.value = to.value
   to.value = tempFrom
-  text.value = translated.value
+  text.value = getDisplayedTranslation()
   translated.value = tempText
+  alternatives.value = []
+  currentAlternativeIndex.value = -1
 }
 
 async function copyToClipboard() {
   try {
-    await navigator.clipboard.writeText(translated.value)
+    await navigator.clipboard.writeText(getDisplayedTranslation())
     copied.value = true
     setTimeout(() => copied.value = false, 2000)
   } catch (e) {
@@ -243,6 +268,8 @@ async function loadLanguages() {
 async function translate() {
   if (!text.value.trim()) {
     translated.value = ''
+    alternatives.value = []
+    currentAlternativeIndex.value = -1
     return
   }
   // Cancela requisição anterior
@@ -253,6 +280,8 @@ async function translate() {
   loading.value = true
   error.value = ''
   translated.value = ''
+  alternatives.value = []
+  currentAlternativeIndex.value = -1
   try {
     const res = await axios.post('/api/translate', {
       q: text.value,
@@ -264,6 +293,8 @@ async function translate() {
       signal: translateAbortController.signal
     })
     translated.value = res.data.translatedText
+    // Armazena alternativas (máximo 3)
+    alternatives.value = (res.data.alternatives || []).slice(0, 3)
   } catch (e) {
     if (axios.isCancel?.(e) || e?.code === 'ERR_CANCELED' || e?.name === 'CanceledError' || e?.message === 'canceled') {
       // Cancelado, não mostra erro
@@ -273,6 +304,24 @@ async function translate() {
   } finally {
     loading.value = false
   }
+}
+
+function selectAlternative(index) {
+  if (index === currentAlternativeIndex.value) {
+    // Se clicar no mesmo, volta para o texto principal
+    currentAlternativeIndex.value = -1
+    return
+  }
+  if (index >= 0 && index < alternatives.value.length) {
+    currentAlternativeIndex.value = index
+  }
+}
+
+function getDisplayedTranslation() {
+  if (currentAlternativeIndex.value >= 0 && currentAlternativeIndex.value < alternatives.value.length) {
+    return alternatives.value[currentAlternativeIndex.value]
+  }
+  return translated.value
 }
 // (autoResize substituído por autoResizeAll)
 
