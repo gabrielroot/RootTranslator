@@ -16,6 +16,29 @@ Route::get('/api/languages', function () {
     );
 });
 
+Route::post('/api/detect', function () {
+    if (!$apiKey = env('LIBRETRANSLATE_KEY')) {
+        return response()->json(['error' => 'API key not configured'], 500);
+    }
+
+    $response = Http::withBody(json_encode(array_merge(request()->all(), ['api_key' => $apiKey])))
+        ->post(env('LIBRETRANSLATE_HOST') . '/detect');
+
+    if ($response->successful()) {
+        $detections = $response->json();
+        
+        return response()->json(
+            array_first($detections)['language'] ?? null,
+            $response->status()
+        );
+    }
+
+    return response()->json(
+        $response->json(),
+        $response->status()
+    );
+});
+
 Route::post('/api/translate', function () {
     if (!$apiKey = env('LIBRETRANSLATE_KEY')) {
         return response()->json(['error' => 'API key not configured'], 500);

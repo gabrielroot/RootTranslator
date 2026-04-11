@@ -41,13 +41,16 @@
             <div class="card-header">
               <label class="label">De</label>
               <select v-model="from" class="lang-select">
-                <option v-for="lang in languages" :key="lang.code" :value="lang.code">{{ lang.name }}</option>
+                <option v-for="lang in [{ code: 'auto', name: '(Detectar idioma)' }, ...languages]" :key="lang.code" :value="lang.code">{{ lang.name }}</option>
               </select>
+              <span v-if="from === 'auto' && detectedLanguageCode" class="detected-lang">
+                {{ getLanguageName(detectedLanguageCode) }}
+              </span>
             </div>
             <div class="textarea-wrapper">
               <textarea 
                 v-model="text" 
-                class="textarea" 
+                class="textarea"
                 placeholder="Digite o texto para traduzir..."
                 @input="onInput"
                 :maxlength="500"
@@ -133,7 +136,12 @@
                 <path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
               </svg>
               <div v-else class="btn-spinner"></div>
-              {{ loading ? 'Traduzindo...' : 'Traduzir' }}
+              <span>
+                <span v-if="isDetecting">Detectando...</span>
+                <span v-else-if="loading">Traduzindo...</span>
+                <span v-else-if="from === 'auto'">Detectar</span>
+                <span v-else>Traduzir</span>
+              </span>
             </span>
           </button>
         </div>
@@ -178,6 +186,8 @@ const isDark = ref(false)
 const copied = ref(false)
 const alternatives = ref([])
 const currentAlternativeIndex = ref(-1) // -1 = texto principal
+const detectedLanguageCode = ref('') // Código do idioma detectado
+const isDetecting = ref(false) // True se está detectando
 
 
 onMounted(() => {
@@ -240,6 +250,7 @@ function swapLanguages() {
   translated.value = tempText
   alternatives.value = []
   currentAlternativeIndex.value = -1
+  detectedLanguageCode.value = ''
 }
 
 async function copyToClipboard() {
@@ -265,11 +276,60 @@ async function loadLanguages() {
   }
 }
 
-async function translate() {
+function getLanguageName(code) {
+  if (!code) return ''
+  const lang = languages.value.find(l => l.code.toLowerCase() === code.toLowerCase())
+  return lang ? lang.name : ''
+}
+
+async function detectLanguage() {
+  // Cancela requisição anterior
+  if (translateAbortController) {
+    translateAbortController.abort()
+  }
+
+  translateAbortController = new AbortController()
+  loading.value = true
+  isDetecting.value = true
+  error.value = ''
+  translated.value = ''
+  alternatives.value = []
+  currentAlternativeIndex.value = -1
+
+  try {
+    const res = await axios.post('/api/detect', {
+      q: text.value,
+    }, {
+      headers: { 'accept': 'application/json' },
+      signal: translateAbortController.signal
+    })
+    
+    // Armazenar o código do idioma detectado
+    detectedLanguageCode.value = res.data
+    isDetecting.value = false
+    translate({ autoDetected: res.data });
+
+  } catch (e) {
+    if (axios.isCancel?.(e) || e?.code === 'ERR_CANCELED' || e?.name === 'CanceledError' || e?.message === 'canceled') {
+      // Cancelado, não mostra erro
+    } else {
+      error.value = 'Erro ao detectar idioma. Tente novamente.'
+    }
+    isDetecting.value = false
+  }
+}
+
+async function translate({ autoDetected = null } = {}) {
+  if (from.value === 'auto' && !autoDetected) {
+    await detectLanguage()
+    return
+  }
+
   if (!text.value.trim()) {
     translated.value = ''
     alternatives.value = []
     currentAlternativeIndex.value = -1
+    detectedLanguageCode.value = ''
     return
   }
   // Cancela requisição anterior
@@ -285,7 +345,7 @@ async function translate() {
   try {
     const res = await axios.post('/api/translate', {
       q: text.value,
-      source: from.value,
+      source: autoDetected || from.value,
       target: to.value,
       format: 'text',
     }, {
@@ -323,7 +383,6 @@ function getDisplayedTranslation() {
   }
   return translated.value
 }
-// (autoResize substituído por autoResizeAll)
 
 // Tradução automática ao trocar idioma
 watch([from, to], () => {
