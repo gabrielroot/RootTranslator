@@ -2,6 +2,7 @@
   <div>
     <div :class="['app-body-bg', { dark: isDark }]" />
     <div class="app-wrapper" :class="{ 'dark': isDark }">
+      <div class="main-layout">
       <div class="translate-app">
       <!-- Header com toggle de tema -->
       <div class="header">
@@ -162,6 +163,62 @@
         <span>Powered by LibreTranslate</span>
       </div>
     </div>
+
+      <!-- History Aside -->
+      <aside class="history-aside" :class="{ 'expanded': historyExpanded }">
+        <!-- Toggle Button (sempre visível) -->
+        <button @click="historyExpanded = !historyExpanded" class="history-toggle-btn" :title="historyExpanded ? 'Recolher histórico' : 'Expandir histórico'">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+            <path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+          </svg>
+          <span v-if="history.length > 0" class="history-badge">{{ history.length }}</span>
+        </button>
+        
+        <!-- Conteúdo do aside (só visível quando expandido) -->
+        <transition name="slide-history">
+          <div v-show="historyExpanded" class="history-content">
+            <div class="history-header">
+              <h2 class="history-title">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                  <path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+                </svg>
+                Histórico
+              </h2>
+              <button v-if="history.length > 0" @click="clearHistory" class="clear-history-btn" title="Limpar histórico">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                  <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                </svg>
+              </button>
+            </div>
+            <div class="history-list">
+              <div v-if="history.length === 0" class="history-empty">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                <p>Nenhuma tradução ainda</p>
+              </div>
+              <div 
+                v-for="(item, index) in history" 
+                :key="index" 
+                class="history-item"
+                @click="loadFromHistory(item)"
+              >
+                <div class="history-item-langs">
+                  <span class="history-lang">{{ getLanguageName(item.from) || item.from }}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+                    <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
+                  </svg>
+                  <span class="history-lang">{{ getLanguageName(item.to) || item.to }}</span>
+                </div>
+                <p class="history-item-text">{{ item.text }}</p>
+                <p class="history-item-translated">{{ item.translated }}</p>
+                <span class="history-item-date">{{ formatDate(item.date) }}</span>
+              </div>
+            </div>
+          </div>
+        </transition>
+      </aside>
+      </div>
     </div>
   </div>
 </template>
@@ -188,12 +245,17 @@ const alternatives = ref([])
 const currentAlternativeIndex = ref(-1) // -1 = texto principal
 const detectedLanguageCode = ref('') // Código do idioma detectado
 const isDetecting = ref(false) // True se está detectando
+const history = ref([]) // Histórico de traduções
+const MAX_HISTORY = 50 // Limite máximo de traduções no histórico
+const historyExpanded = ref(false) // Controla se o aside está expandido
 
 
 onMounted(() => {
   // Carregar tema salvo
   const savedTheme = localStorage.getItem('translator-theme')
   isDark.value = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  // Carregar histórico do localStorage
+  loadHistory()
   loadLanguages()
   // Tradução automática ao abrir se já houver texto
   if (text.value.trim()) triggerAutoTranslate()
@@ -242,6 +304,12 @@ function toggleTheme() {
 }
 
 function swapLanguages() {
+  if (from.value === 'auto') {
+    // Se "De" for auto, não permite swap
+    error.value = 'Não é possível trocar idiomas quando "De" está definido como detectar automaticamente.'
+    return
+  }
+
   const tempFrom = from.value
   const tempText = text.value
   from.value = to.value
@@ -355,6 +423,14 @@ async function translate({ autoDetected = null } = {}) {
     translated.value = res.data.translatedText
     // Armazena alternativas (máximo 3)
     alternatives.value = (res.data.alternatives || []).slice(0, 3)
+    // Salvar no histórico
+    saveToHistory({
+      text: text.value,
+      translated: res.data.translatedText,
+      from: autoDetected || from.value,
+      to: to.value,
+      date: new Date().toISOString()
+    })
   } catch (e) {
     if (axios.isCancel?.(e) || e?.code === 'ERR_CANCELED' || e?.name === 'CanceledError' || e?.message === 'canceled') {
       // Cancelado, não mostra erro
@@ -382,6 +458,76 @@ function getDisplayedTranslation() {
     return alternatives.value[currentAlternativeIndex.value]
   }
   return translated.value
+}
+
+// ===== Funções de Histórico =====
+function loadHistory() {
+  try {
+    const saved = localStorage.getItem('translator-history')
+    if (saved) {
+      history.value = JSON.parse(saved)
+    }
+  } catch (e) {
+    console.error('Erro ao carregar histórico:', e)
+    history.value = []
+  }
+}
+
+function saveToHistory(item) {
+  // Evitar duplicatas consecutivas
+  if (history.value.length > 0) {
+    const last = history.value[0]
+    if (last.text === item.text && last.from === item.from && last.to === item.to) {
+      return
+    }
+  }
+  
+  // Adicionar no início
+  history.value.unshift(item)
+  
+  // Manter apenas MAX_HISTORY itens
+  if (history.value.length > MAX_HISTORY) {
+    history.value = history.value.slice(0, MAX_HISTORY)
+  }
+  
+  // Salvar no localStorage
+  try {
+    localStorage.setItem('translator-history', JSON.stringify(history.value))
+  } catch (e) {
+    console.error('Erro ao salvar histórico:', e)
+  }
+}
+
+function clearHistory() {
+  history.value = []
+  localStorage.removeItem('translator-history')
+}
+
+function loadFromHistory(item) {
+  text.value = item.text
+  from.value = item.from
+  to.value = item.to
+  translated.value = item.translated
+  alternatives.value = []
+  currentAlternativeIndex.value = -1
+  detectedLanguageCode.value = ''
+}
+
+function formatDate(dateStr) {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diff = now - date
+  
+  // Menos de 1 minuto
+  if (diff < 60000) return 'Agora'
+  // Menos de 1 hora
+  if (diff < 3600000) return `${Math.floor(diff / 60000)} min atrás`
+  // Menos de 24 horas
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h atrás`
+  // Menos de 7 dias
+  if (diff < 604800000) return `${Math.floor(diff / 86400000)}d atrás`
+  
+  return date.toLocaleDateString('pt-BR')
 }
 
 // Tradução automática ao trocar idioma
