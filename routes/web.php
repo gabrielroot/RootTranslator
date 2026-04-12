@@ -18,7 +18,7 @@ Route::get('/api/languages', function () {
 
 Route::post('/api/detect', function () {
     if (!$apiKey = env('LIBRETRANSLATE_KEY')) {
-        return response()->json(['error' => 'API key not configured'], 500);
+        return response()->json(['message' => 'API key not configured'], 500);
     }
 
     $response = Http::withBody(json_encode(array_merge(request()->all(), ['api_key' => $apiKey])))
@@ -41,11 +41,22 @@ Route::post('/api/detect', function () {
 
 Route::post('/api/translate', function () {
     if (!$apiKey = env('LIBRETRANSLATE_KEY')) {
-        return response()->json(['error' => 'API key not configured'], 500);
+        return response()->json(['message' => 'API key not configured'], 500);
+    }
+
+    $body = request()->all();
+
+    if (strlen($body['q']) == 0) {
+        return response()->json(['message' => 'Text cannot be empty'], 400);
+    }
+
+    if (strlen($body['q']) > 500) {
+        return response()->json(['message' => 'Text exceeds maximum length of 500 characters'], 400);
     }
 
     $response = Http::withBody(json_encode(array_merge(
-        request()->all(), [
+        $body, 
+        [
             'alternatives' => 3,
             'api_key' => $apiKey
         ])))

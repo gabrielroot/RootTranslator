@@ -78,7 +78,7 @@
               <textarea 
                 :value="getDisplayedTranslation()" 
                 class="textarea output-textarea" 
-                placeholder="Tradução aparecerá aqui..."
+                placeholder="A tradução aparecerá aqui..."
                 readonly
               ></textarea>
               
@@ -176,7 +176,7 @@ import axios from 'axios'
 
 const text = ref('')
 const translated = ref('')
-const from = ref('pt')
+const from = ref('auto')
 const to = ref('en')
 const loading = ref(false)
 const loadingLanguages = ref(true)
@@ -359,7 +359,7 @@ async function translate({ autoDetected = null } = {}) {
     if (axios.isCancel?.(e) || e?.code === 'ERR_CANCELED' || e?.name === 'CanceledError' || e?.message === 'canceled') {
       // Cancelado, não mostra erro
     } else {
-      error.value = 'Erro ao traduzir. Tente novamente.'
+      error.value = e?.response?.data?.message || 'Erro ao traduzir. Tente novamente.'
     }
   } finally {
     loading.value = false
