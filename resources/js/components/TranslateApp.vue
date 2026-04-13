@@ -338,7 +338,7 @@ async function loadLanguages() {
     const res = await axios.get('/api/languages')
     languages.value = res.data.map(lang => ({ code: lang.code, name: lang.name }))
   } catch (e) {
-    error.value = 'Erro ao carregar idiomas. Tente novamente.'
+    error.value = `Erro ao carregar idiomas. Tente novamente. "${e?.response?.data?.message || ''}"`
   } finally {
     loadingLanguages.value = false 
   }
@@ -381,7 +381,7 @@ async function detectLanguage() {
     if (axios.isCancel?.(e) || e?.code === 'ERR_CANCELED' || e?.name === 'CanceledError' || e?.message === 'canceled') {
       // Cancelado, não mostra erro
     } else {
-      error.value = 'Erro ao detectar idioma. Tente novamente.'
+      error.value = `Erro ao detectar idioma. Tente novamente. "${e?.response?.data?.message || ''}"`
     }
     isDetecting.value = false
   }
@@ -435,7 +435,7 @@ async function translate({ autoDetected = null } = {}) {
     if (axios.isCancel?.(e) || e?.code === 'ERR_CANCELED' || e?.name === 'CanceledError' || e?.message === 'canceled') {
       // Cancelado, não mostra erro
     } else {
-      error.value = e?.response?.data?.message || 'Erro ao traduzir. Tente novamente.'
+      error.value = `Erro ao traduzir. Tente novamente. "${e?.response?.data?.message || ''}"`
     }
   } finally {
     loading.value = false
