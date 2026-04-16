@@ -16,6 +16,7 @@ COPY --from=app /var/www/public /var/www/public
 # Create storage directory for volume mount
 RUN mkdir -p /var/www/storage
 
-EXPOSE 80
+# Create upstream config for php-fpm
+RUN echo "upstream php-upstream { server app:9000; }" > /etc/nginx/conf.d/upstream.conf
 
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 80
