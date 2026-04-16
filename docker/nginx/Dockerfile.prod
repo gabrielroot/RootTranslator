@@ -1,13 +1,17 @@
 # -----------------------------------------------------------------------------
 # Production Nginx with static files from app
 # -----------------------------------------------------------------------------
-FROM nginx:alpine AS app
+ARG APP_IMAGE=ghcr.io/gabrielroot/roottranslator:latest
+
+FROM ${APP_IMAGE} AS app
+
+FROM nginx:alpine
 
 # Copy nginx configuration
 COPY docker/nginx/nginx.prod.conf /etc/nginx/conf.d/default.conf
 
-# Copy public files from app image
-COPY public /var/www/public
+# Copy public files from app image (includes compiled Vue assets)
+COPY --from=app /var/www/public /var/www/public
 
 # Create storage directory for volume mount
 RUN mkdir -p /var/www/storage

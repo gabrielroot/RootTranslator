@@ -24,6 +24,8 @@ services:
     build:
       context: .
       dockerfile: docker/nginx/Dockerfile.prod
+      args:
+        APP_IMAGE: ghcr.io/gabrielroot/roottranslator:latest
     container_name: ${APP_NAME:-laravel}_nginx_prod
     restart: unless-stopped
     expose:
