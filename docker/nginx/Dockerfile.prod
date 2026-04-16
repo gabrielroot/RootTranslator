@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 # Production Nginx with static files from app
 # -----------------------------------------------------------------------------
-ARG APP_IMAGE=roottranslator-app:latest
+ARG APP_IMAGE=ghcr.io/gabrielroot/roottranslator:latest
 
 FROM ${APP_IMAGE} AS app
 
