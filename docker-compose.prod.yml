@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile.prod
-    image: roottranslator-app:prod
+    image: ghcr.io/gabrielroot/RootTranslator:latest
     container_name: ${APP_NAME:-laravel}_app_prod
     restart: unless-stopped
     volumes:
