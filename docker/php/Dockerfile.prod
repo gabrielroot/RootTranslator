@@ -1,0 +1,112 @@
+# -----------------------------------------------------------------------------
+# Stage 1: Build frontend assets
+# -----------------------------------------------------------------------------
+FROM node:22-alpine AS frontend
+
+WORKDIR /app
+
+# Copy package files first for better caching
+COPY package.json package-lock.json* ./
+
+# Install dependencies
+RUN npm ci --production=false
+
+# Copy source files needed for build
+COPY resources ./resources
+COPY vite.config.js ./
+COPY public ./public
+
+# Build production assets
+RUN npm run build
+
+# -----------------------------------------------------------------------------
+# Stage 2: Install PHP dependencies
+# -----------------------------------------------------------------------------
+FROM composer:latest AS composer
+
+WORKDIR /app
+
+# Copy composer files
+COPY composer.json composer.lock ./
+
+# Install dependencies without dev packages
+RUN composer install \
+    --no-dev \
+    --no-scripts \
+    --no-autoloader \
+    --prefer-dist \
+    --ignore-platform-reqs
+
+# Copy application code
+COPY . .
+
+# Generate optimized autoloader
+RUN composer dump-autoload --optimize --no-dev
+
+# -----------------------------------------------------------------------------
+# Stage 3: Production image
+# -----------------------------------------------------------------------------
+FROM php:8.4-fpm-alpine
+
+# Install system dependencies
+RUN apk add --no-cache \
+    git \
+    curl \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    libwebp-dev \
+    freetype-dev \
+    oniguruma-dev \
+    libxml2-dev \
+    libzip-dev \
+    icu-dev \
+    zip \
+    unzip \
+    procps \
+    linux-headers \
+    $PHPIZE_DEPS
+
+# Configure and install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install -j$(nproc) \
+        pdo_mysql \
+        mbstring \
+        exif \
+        pcntl \
+        bcmath \
+        gd \
+        zip \
+        intl \
+        opcache \
+        xml \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && apk del $PHPIZE_DEPS linux-headers \
+    && rm -rf /tmp/* /var/cache/apk/*
+
+# Production PHP configuration
+RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+
+# Custom PHP production settings
+COPY docker/php/php.prod.ini /usr/local/etc/php/conf.d/99-production.ini
+
+# Set working directory
+WORKDIR /var/www
+
+# Copy application from composer stage
+COPY --from=composer /app /var/www
+
+# Copy built frontend assets
+COPY --from=frontend /app/public/build /var/www/public/build
+
+# Set correct permissions
+RUN chown -R www-data:www-data /var/www \
+    && chmod -R 755 /var/www/storage \
+    && chmod -R 755 /var/www/bootstrap/cache
+
+# Switch to non-root user
+USER www-data
+
+EXPOSE 9000
+
+CMD ["php-fpm"]
