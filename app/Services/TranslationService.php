@@ -31,6 +31,15 @@ class TranslationService
             $value = Cache::remember($key, now()->addDays(1), function () {
                 $response = Http::get($this->getBaseUrl() . '/languages');
 
+                if ($response->failed()) {
+                    throw new IntegrationException(
+                        message: 'Failed to fetch languages',
+                        errorCode: IntegrationException::ERROR_API_REQUEST_FAILED,
+                        httpStatusCode: $response->status(),
+                        apiResponse: $response->body()
+                    );
+                }
+
                 return $response->json();
             });
 
@@ -71,7 +80,29 @@ class TranslationService
                 $response = Http::withBody(json_encode(array_merge($body, ['api_key' => $this->getApiKey()])))
                     ->post($this->getBaseUrl() . '/detect');
 
-                return $response->json();
+                if ($response->failed()) {
+                    throw new IntegrationException(
+                        message: 'Failed to detect language',
+                        errorCode: IntegrationException::ERROR_API_REQUEST_FAILED,
+                        httpStatusCode: $response->status(),
+                        apiResponse: $response->body(),
+                        context: $body
+                    );
+                }
+
+                $detections = array_first($response->json())['language'];
+
+                if (!$detections) {
+                    throw new IntegrationException(
+                        message: 'No language detected',
+                        errorCode: IntegrationException::ERROR_NOT_FOUND,
+                        httpStatusCode: 404,
+                        apiResponse: $response->body(),
+                        context: $body
+                    );
+                }
+
+                return $detections;
             });
 
             return IntegrationResponse::success($value);
@@ -113,6 +144,16 @@ class TranslationService
                     ['alternatives' => 3, 'api_key' => $this->getApiKey()]
                 )))
                 ->post($this->getBaseUrl() . '/translate');
+
+                if ($response->failed()) {
+                    throw new IntegrationException(
+                        message: 'Failed to translate text',
+                        errorCode: IntegrationException::ERROR_API_REQUEST_FAILED,
+                        httpStatusCode: $response->status(),
+                        apiResponse: $response->body(),
+                        context: $body
+                    );
+                }
 
                 return $response->json();
             });
