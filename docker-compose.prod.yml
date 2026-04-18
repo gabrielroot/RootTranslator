@@ -54,20 +54,20 @@ services:
       - "traefik.http.routers.nginx.entrypoints=http,https"
       - "traefik.http.services.nginx.loadbalancer.server.port=80"
 
-  redis:
-    image: redis:7-alpine
-    container_name: ${APP_NAME:-laravel}_redis_prod
-    restart: unless-stopped
-    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
-    volumes:
-      - redis_data:/data
-    networks:
-      - laravel_prod
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: ${APP_NAME:-laravel}_redis_prod
+  #   restart: unless-stopped
+  #   command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+  #   volumes:
+  #     - redis_data:/data
+  #   networks:
+  #     - laravel_prod
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
 
   # ---------------------------------------------------------------------------
   # Queue Worker (para quando implementar filas)
