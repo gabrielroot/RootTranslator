@@ -3,6 +3,10 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
+
+use App\DTO\IntegrationResponse;
+use App\Exceptions\IntegrationException;
 
 class TranslationService
 {
@@ -18,65 +22,138 @@ class TranslationService
     /**
      * Obtém os idiomas disponíveis.
      *
-     * @return \Illuminate\Http\Client\Response
+     * @return IntegrationResponse
      */
-    public function getLanguages(): \Illuminate\Http\Client\Response
+    public function getLanguages(): IntegrationResponse
     {
-        $response = Http::get($this->getBaseUrl() . '/languages');
+        try {
+            $key = "languages:" . md5($this->getBaseUrl() . '/languages');
+            $value = Cache::remember($key, now()->addDays(1), function () {
+                $response = Http::get($this->getBaseUrl() . '/languages');
 
-        return $response;
+                return $response->json();
+            });
+
+            return IntegrationResponse::success($value);
+        } catch (IntegrationException $integrationException) {
+            return IntegrationResponse::error(
+                message: $integrationException->getMessage(),
+                errorCode: $integrationException->getErrorCode(),
+                httpStatusCode: $integrationException->getHttpStatusCode() ?? 400,
+                meta: [
+                    'context' => $integrationException->getContext(),
+                    'api_response' => $integrationException->getApiResponse()
+                ]
+            );
+        } catch (\Exception $e) {
+            return IntegrationResponse::fromException(new IntegrationException(
+                message: 'Erro inesperado durante a tradução',
+                errorCode: IntegrationException::ERROR_SERVER_ERROR,
+                httpStatusCode: 500,
+                context: ['endpoint' => $this->getBaseUrl() . '/languages']
+            ));
+        }
     }
 
     /**
      * Detecta o idioma de um texto.
      *
      * @param array $data
-     * @return \Illuminate\Http\Client\Response
+     * @return IntegrationResponse
      */
-    public function detectLanguage(array $body): \Illuminate\Http\Client\Response
+    public function detectLanguage(array $body): IntegrationResponse
     {
-        $response = Http::withBody(json_encode(array_merge($body, ['api_key' => $this->getApiKey()])))
-            ->post($this->getBaseUrl() . '/detect');
+        try {
+            $this->validateInputSize($body['q']);
 
-        return $response;
+            $key = "language-detection:" . md5(json_encode($body));
+            $value = Cache::remember($key, now()->addDays(1), function () use ($body) {
+                $response = Http::withBody(json_encode(array_merge($body, ['api_key' => $this->getApiKey()])))
+                    ->post($this->getBaseUrl() . '/detect');
+
+                return $response->json();
+            });
+
+            return IntegrationResponse::success($value);
+        } catch (IntegrationException $integrationException) {
+            return IntegrationResponse::error(
+                message: $integrationException->getMessage(),
+                errorCode: $integrationException->getErrorCode(),
+                httpStatusCode: $integrationException->getHttpStatusCode() ?? 400,
+                meta: [
+                    'context' => $integrationException->getContext(),
+                    'api_response' => $integrationException->getApiResponse()
+                ]
+            );
+        } catch (\Exception $e) {
+            return IntegrationResponse::fromException(new IntegrationException(
+                message: 'Erro inesperado durante a tradução',
+                errorCode: IntegrationException::ERROR_SERVER_ERROR,
+                httpStatusCode: 500,
+                context: $body
+            ));
+        }
     }
 
     /**
      * Realiza a tradução de um texto.
      *
      * @param array $data
-     * @return \Illuminate\Http\Client\Response
+     * @return IntegrationResponse
      */
-    public function translate(array $body): \Illuminate\Http\Client\Response
+    public function translate(array $body): IntegrationResponse
     {
-        $this->validateInputSize($body['q']);
+        try {
+            $this->validateInputSize($body['q']);
 
-        $response = Http::withBody(json_encode(array_merge(
-            $body, 
-            [
-                'alternatives' => 3,
-                'api_key' => $this->getApiKey()
-            ])))
-        ->post($this->getBaseUrl() . '/translate');
+            $key = "translation:" . md5(json_encode($body));
+            $value = Cache::remember($key, now()->addCentury(), function () use ($body) {
+                $response = Http::withBody(json_encode(array_merge(
+                    $body, 
+                    ['alternatives' => 3, 'api_key' => $this->getApiKey()]
+                )))
+                ->post($this->getBaseUrl() . '/translate');
 
-        return $response;
+                return $response->json();
+            });
+
+            return IntegrationResponse::success($value);
+        } catch (IntegrationException $integrationException) {
+            return IntegrationResponse::error(
+                message: $integrationException->getMessage(),
+                errorCode: $integrationException->getErrorCode(),
+                httpStatusCode: $integrationException->getHttpStatusCode() ?? 400,
+                meta: [
+                    'context' => $integrationException->getContext(),
+                    'api_response' => $integrationException->getApiResponse()
+                ]
+            );
+        } catch (\Exception $e) {
+            return IntegrationResponse::fromException(new IntegrationException(
+                message: 'Erro inesperado durante a tradução',
+                errorCode: IntegrationException::ERROR_SERVER_ERROR,
+                httpStatusCode: 500,
+                context: $body
+            ));
+        }
     }
 
     public function validateInputSize(string $text): void
     {
         if (strlen($text) == 0) {
-            throw new \InvalidArgumentException('Text cannot be empty');
+            throw new IntegrationException('Text cannot be empty', IntegrationException::ERROR_BAD_REQUEST);
         }
 
         if (strlen($text) > self::MAX_TEXT_LENGTH) {
-            throw new \InvalidArgumentException('Text exceeds maximum length of ' . self::MAX_TEXT_LENGTH . ' characters');
+            throw new IntegrationException('Text exceeds maximum length of ' . self::MAX_TEXT_LENGTH . ' characters', 
+                IntegrationException::ERROR_BAD_REQUEST);
         }
     }
 
     private function getBaseUrl(): string
     {
         if (!$this->BASE_URL = env('LIBRETRANSLATE_HOST')) {
-            throw new \RuntimeException('Base URL not configured');
+            throw new IntegrationException('Base URL not configured', IntegrationException::ERROR_BAD_REQUEST);
         }
 
         return $this->BASE_URL;
@@ -85,7 +162,7 @@ class TranslationService
     private function getApiKey(): string
     {
         if (!$this->API_KEY = env('LIBRETRANSLATE_KEY')) {
-            throw new \RuntimeException('API key not configured');
+            throw new IntegrationException('API key not configured', IntegrationException::ERROR_AUTHENTICATION_FAILED);
         }
 
         return $this->API_KEY;

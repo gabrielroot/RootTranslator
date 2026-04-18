@@ -7,50 +7,50 @@ use App\Services\TranslationService;
 class TranslatorController extends Controller
 {
     public function getLanguages(TranslationService $translationService) {
-        try {
-            $response = $translationService->getLanguages();
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
-        }
-        
-        return response()->json(
-            $response->json(),
-            $response->status()
-        );
-    }
+        $response = $translationService->getLanguages();
 
-    public function detectLanguage(TranslationService $translationService) {
-        try {
-            $response = $translationService->detectLanguage(request()->all());
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
-        }
-
-        if ($response->successful()) {
-            $detections = $response->json();
-            
+        if ($response->isSuccess()) {
             return response()->json(
-                array_first($detections)['language'] ?? null,
-                $response->status()
+                $response->getData(),
+                $response->getHttpStatusCode()
             );
         }
 
         return response()->json(
-            $response->json(),
-            $response->status()
+            ['message' => $response->getMessage(), 'meta' => $response->getMeta()],
+            $response->getHttpStatusCode() ?? 500
+        );
+    }
+
+    public function detectLanguage(TranslationService $translationService) {
+        $response = $translationService->detectLanguage(request()->all());
+
+        if ($response->isSuccess()) {
+            return response()->json(
+                $response->getData(),
+                $response->getHttpStatusCode()
+            );
+        }
+
+        return response()->json(
+            ['message' => $response->getMessage(), 'meta' => $response->getMeta()],
+            $response->getHttpStatusCode() ?? 500
         );
     }
 
     public function translate(TranslationService $translationService) {
-        try {
-            $response = $translationService->translate(request()->all());
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
+        $response = $translationService->translate(request()->all());
+
+        if ($response->isSuccess()) {
+            return response()->json(
+                $response->getData(),
+                $response->getHttpStatusCode()
+            );
         }
-        
+
         return response()->json(
-            $response->json(),
-            $response->status()
+            ['message' => $response->getMessage(), 'meta' => $response->getMeta()],
+            $response->getHttpStatusCode() ?? 400
         );
     }
 }
