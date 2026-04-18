@@ -54,12 +54,12 @@ class TranslationService
                     'api_response' => $integrationException->getApiResponse()
                 ]
             );
-        } catch (\Exception $e) {
+        } catch (\Exception $exception) {
             return IntegrationResponse::fromException(new IntegrationException(
                 message: 'Erro inesperado durante a tradução',
                 errorCode: IntegrationException::ERROR_SERVER_ERROR,
                 httpStatusCode: 500,
-                context: ['endpoint' => $this->getBaseUrl() . '/languages']
+                context: ['endpoint' => $this->getBaseUrl() . '/languages', 'exception' => $exception]
             ));
         }
     }
@@ -116,12 +116,12 @@ class TranslationService
                     'api_response' => $integrationException->getApiResponse()
                 ]
             );
-        } catch (\Exception $e) {
+        } catch (\Exception $exception) {
             return IntegrationResponse::fromException(new IntegrationException(
                 message: 'Erro inesperado durante a tradução',
                 errorCode: IntegrationException::ERROR_SERVER_ERROR,
                 httpStatusCode: 500,
-                context: $body
+                context: ['body' => $body, 'endpoint' => $this->getBaseUrl() . '/detect', 'exception' => $exception]
             ));
         }
     }
@@ -169,12 +169,12 @@ class TranslationService
                     'api_response' => $integrationException->getApiResponse()
                 ]
             );
-        } catch (\Exception $e) {
+        } catch (\Exception $exception) {
             return IntegrationResponse::fromException(new IntegrationException(
                 message: 'Erro inesperado durante a tradução',
                 errorCode: IntegrationException::ERROR_SERVER_ERROR,
                 httpStatusCode: 500,
-                context: $body
+                context: ['body' => $body, 'endpoint' => $this->getBaseUrl() . '/detect', 'exception' => $exception]
             ));
         }
     }
