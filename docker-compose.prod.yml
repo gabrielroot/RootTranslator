@@ -7,9 +7,9 @@ services:
       - app_storage:/var/www/storage
     networks:
       - laravel_prod
-    depends_on:
-      redis:
-        condition: service_healthy
+    # depends_on:
+    #   redis:
+    #     condition: service_healthy
     env_file:
       - .env
     environment:
