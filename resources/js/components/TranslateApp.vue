@@ -233,8 +233,9 @@ import axios from 'axios'
 
 const text = ref('')
 const translated = ref('')
-const from = ref('auto')
-const to = ref('en')
+const preferredLanguage = JSON.parse(localStorage.getItem('translator-preferred-language') || '{"from":"auto","to":"en"}')
+const from = ref(preferredLanguage.from)
+const to = ref(preferredLanguage.to)
 const loading = ref(false)
 const loadingLanguages = ref(true)
 const error = ref('')
@@ -431,6 +432,12 @@ async function translate({ autoDetected = null } = {}) {
       to: to.value,
       date: new Date().toISOString()
     })
+
+    try {
+      localStorage.setItem('translator-preferred-language', JSON.stringify({ from: from.value, to: to.value }))
+    } catch (e) {
+      console.error('Erro ao salvar idioma preferido:', e)
+    }
   } catch (e) {
     if (axios.isCancel?.(e) || e?.code === 'ERR_CANCELED' || e?.name === 'CanceledError' || e?.message === 'canceled') {
       // Cancelado, não mostra erro
