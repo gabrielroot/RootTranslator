@@ -7,7 +7,7 @@ services:
       - app_storage:/var/www/storage
     networks:
       - laravel_prod
-      - coolify
+      - coolify 
     # depends_on:
     #   redis:
     #     condition: service_healthy
