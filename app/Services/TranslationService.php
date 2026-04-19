@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\RateLimiter;
 
 use App\DTO\IntegrationResponse;
 use App\Exceptions\IntegrationException;
@@ -13,11 +15,18 @@ class TranslationService
 
     private const MAX_TEXT_LENGTH = 500;
 
+    private const RATE_LIMIT_PER_MINUTE = 20;
+
     private ?string $BASE_URL;
 
     private ?string $API_KEY;
 
-    public function __construct(){}
+    protected $request;
+
+    public function __construct(Request $request)
+    {
+        $this->request = $request;
+    }
 
     /**
      * Obtém os idiomas disponíveis.
@@ -73,6 +82,9 @@ class TranslationService
     public function detectLanguage(array $body): IntegrationResponse
     {
         try {
+            $limiterKey = 'rate-limiter:detect-language:session:' . $this->request->session()->getId();
+            $this->validateAttemptsLimit($limiterKey);
+            
             $this->validateInputSize($body['q']);
 
             $key = "language-detection:" . md5(json_encode($body));
@@ -135,6 +147,9 @@ class TranslationService
     public function translate(array $body): IntegrationResponse
     {
         try {
+            $limiterKey = 'rate-limiter:translate:session:' . $this->request->session()->getId();
+            $this->validateAttemptsLimit($limiterKey);
+
             $this->validateInputSize($body['q']);
 
             $key = "translation:" . md5(json_encode($body));
@@ -179,6 +194,19 @@ class TranslationService
         }
     }
 
+    private function validateAttemptsLimit(string $key): void
+    {
+        if (RateLimiter::tooManyAttempts($key, self::RATE_LIMIT_PER_MINUTE)) {
+            throw new IntegrationException(
+                message: 'Muitas solicitações. Por favor, tente novamente em um minuto.',
+                errorCode: IntegrationException::ERROR_RATE_LIMIT,
+                httpStatusCode: 429,
+                context: ['key' => $key]
+            );
+        } else {
+            RateLimiter::hit($key, 60 * 1); // Limite de 20 tentativas por minuto
+        }
+    }
     public function validateInputSize(string $text): void
     {
         if (strlen($text) == 0) {
