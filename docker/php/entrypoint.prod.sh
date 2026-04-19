@@ -1,11 +1,13 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 echo "🚀 Starting production environment..."
 
 # Ensure storage directories exist and have correct permissions
 echo "📁 Setting up storage directories..."
-mkdir -p /var/www/storage/framework/{sessions,views,cache}
+mkdir -p /var/www/storage/framework/sessions
+mkdir -p /var/www/storage/framework/views
+mkdir -p /var/www/storage/framework/cache
 mkdir -p /var/www/storage/logs
 mkdir -p /var/www/bootstrap/cache
 
