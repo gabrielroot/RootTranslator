@@ -20,4 +20,7 @@ export default defineConfig({
             ignored: ['**/storage/framework/views/**'],
         },
     },
+    build: {
+        manifest: 'manifest.json',
+    },
 });
