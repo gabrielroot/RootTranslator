@@ -147,15 +147,7 @@
           </button>
         </div>
 
-        <!-- Error Message -->
-        <transition name="shake">
-          <div v-if="error" class="error-message">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-            </svg>
-            {{ error }}
-          </div>
-        </transition>
+        <!-- Error Message removido daqui - agora é toast flutuante -->
       </div>
 
       <!-- Footer -->
@@ -163,6 +155,21 @@
         <span>Powered by LibreTranslate</span>
       </div>
     </div>
+
+    <!-- Toast de erro flutuante -->
+    <transition name="toast">
+      <div v-if="error" class="error-toast">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="error-toast-icon">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        </svg>
+        <span class="error-toast-text">{{ error }}</span>
+        <button @click="error = ''" class="error-toast-close" title="Fechar">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+        </button>
+      </div>
+    </transition>
 
       <!-- History Aside -->
       <aside class="history-aside" :class="{ 'expanded': historyExpanded }">
@@ -550,6 +557,15 @@ function formatDate(dateStr) {
 // Tradução automática ao trocar idioma
 watch([from, to], () => {
   if (text.value.trim()) triggerAutoTranslate()
+})
+
+// Auto-dismiss do toast de erro após 5s
+let errorDismissTimeout = null
+watch(() => error.value, (val) => {
+  if (errorDismissTimeout) clearTimeout(errorDismissTimeout)
+  if (val) {
+    errorDismissTimeout = setTimeout(() => { error.value = '' }, 5000)
+  }
 })
 </script>
 
