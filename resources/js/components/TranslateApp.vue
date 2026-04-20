@@ -272,6 +272,7 @@ function onInput(e) {
 }
 
 function autoResizeAll() {
+  if (window.innerWidth <= 768) return // No mobile o layout usa flex, não auto-resize
   setTimeout(() => {
     document.querySelectorAll('.textarea').forEach(el => {
       el.style.height = 'auto'

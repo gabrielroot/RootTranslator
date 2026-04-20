@@ -890,9 +890,98 @@
 
 
 @media (max-width: 768px) {
-  /* .translate-app {
-    width: 1000px;
-  } */
+  /* Layout mobile: usa 100dvh para encolher quando o teclado abre */
+  .app-wrapper {
+    height: 100dvh;
+    min-height: unset;
+    overflow: hidden;
+    padding: 0.5rem;
+  }
+
+  .translate-app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 16px;
+  }
+
+  .header {
+    padding: 0.75rem 1rem;
+    flex-shrink: 0;
+  }
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .title {
+    font-size: 1.1rem;
+  }
+
+  .content {
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .translation-grid {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    gap: 0.4rem;
+  }
+
+  .translation-card {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 0.75rem;
+  }
+
+  .card-header {
+    margin-bottom: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .textarea-wrapper {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .textarea {
+    flex: 1;
+    min-height: unset;
+    height: 100% !important;
+    overflow-y: auto;
+    padding: 0.75rem;
+    font-size: 0.95rem;
+  }
+
+  .output-card .textarea-wrapper {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .swap-btn {
+    margin: 0.2rem auto;
+    flex-shrink: 0;
+    transform: rotate(90deg);
+    width: 36px;
+    height: 36px;
+  }
+
+  .swap-btn:hover {
+    transform: rotate(270deg) scale(1.1);
+  }
 
   .alternatives-container {
     position: relative;
@@ -901,26 +990,45 @@
     transform: none;
     flex-direction: row;
     justify-content: center;
-    margin-top: 1rem;
-  }
-  
-  .output-card .textarea-wrapper {
-    display: flex;
-    flex-direction: column;
+    margin-top: 0.5rem;
+    flex-shrink: 0;
   }
 
-    .translation-grid {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
+  .action-section {
+    margin-top: 0.4rem;
+    flex-shrink: 0;
   }
 
-  .swap-btn {
-    margin: 0.5rem auto;
-    transform: rotate(90deg);
+  .translate-btn {
+    padding: 0.65rem 2rem;
+    font-size: 0.95rem;
+    border-radius: 12px;
   }
-  
-  .swap-btn:hover {
-    transform: rotate(270deg) scale(1.1);
+
+  .error-message {
+    margin-top: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .footer {
+    display: none;
+  }
+
+  .char-count {
+    bottom: 0.4rem;
+    right: 0.5rem;
+    font-size: 0.7rem;
+  }
+
+  .copy-btn {
+    bottom: 0;
+    right: -0.1rem;
+  }
+
+  .history-aside {
+    bottom: 0.75rem;
+    right: 0.75rem;
   }
 }
 
