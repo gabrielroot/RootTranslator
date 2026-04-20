@@ -29,7 +29,7 @@ class TranslatorController extends Controller
         $body = request()->all();
 
         try {
-            $response = $translationService->detectLanguage(request()->all());
+            // $response = $translationService->detectLanguage(request()->all());
         } catch (\Throwable $exception) {
             $response = IntegrationResponse::error(
                 message: 'Ocorreu um erro no servidor durante o processamento',
