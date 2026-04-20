@@ -368,15 +368,17 @@ async function detectLanguage() {
   try {
     const res = await axios.post('/api/detect', {
       q: text.value,
+      to: to.value
     }, {
       headers: { 'accept': 'application/json' },
       signal: translateAbortController.signal
     })
     
     // Armazenar o código do idioma detectado
-    detectedLanguageCode.value = res.data
+    detectedLanguageCode.value = res.data.source
     isDetecting.value = false
-    translate({ autoDetected: res.data });
+    loading.value = false
+    handleTranslationResponse(res.data)
 
   } catch (e) {
     if (axios.isCancel?.(e) || e?.code === 'ERR_CANCELED' || e?.name === 'CanceledError' || e?.message === 'canceled') {
@@ -385,11 +387,12 @@ async function detectLanguage() {
       error.value = `Erro ao detectar idioma. Tente novamente. "${e?.response?.data?.message || ''}"`
     }
     isDetecting.value = false
+    loading.value = false
   }
 }
 
-async function translate({ autoDetected = null } = {}) {
-  if (from.value === 'auto' && !autoDetected) {
+async function translate() {
+  if (from.value === 'auto') {
     await detectLanguage()
     return
   }
@@ -414,21 +417,36 @@ async function translate({ autoDetected = null } = {}) {
   try {
     const res = await axios.post('/api/translate', {
       q: text.value,
-      source: autoDetected || from.value,
+      source: from.value,
       target: to.value,
       format: 'text',
     }, {
       headers: { 'accept': 'application/json' },
       signal: translateAbortController.signal
     })
-    translated.value = res.data.translatedText
+
+    handleTranslationResponse(res.data)
+  } catch (e) {
+    if (axios.isCancel?.(e) || e?.code === 'ERR_CANCELED' || e?.name === 'CanceledError' || e?.message === 'canceled') {
+      // Cancelado, não mostra erro
+    } else {
+      error.value = `Erro ao traduzir. Tente novamente. "${e?.response?.data?.message || ''}"`
+    }
+  } finally {
+    loading.value = false
+    isDetecting.value = false
+  }
+}
+
+function handleTranslationResponse(data) {
+    translated.value = data.translatedText
     // Armazena alternativas (máximo 3)
-    alternatives.value = (res.data.alternatives || []).slice(0, 3)
+    alternatives.value = (data.alternatives || []).slice(0, 3)
     // Salvar no histórico
     saveToHistory({
       text: text.value,
-      translated: res.data.translatedText,
-      from: autoDetected || from.value,
+      translated: data.translatedText,
+      from: from.value,
       to: to.value,
       date: new Date().toISOString()
     })
@@ -438,15 +456,6 @@ async function translate({ autoDetected = null } = {}) {
     } catch (e) {
       console.error('Erro ao salvar idioma preferido:', e)
     }
-  } catch (e) {
-    if (axios.isCancel?.(e) || e?.code === 'ERR_CANCELED' || e?.name === 'CanceledError' || e?.message === 'canceled') {
-      // Cancelado, não mostra erro
-    } else {
-      error.value = `Erro ao traduzir. Tente novamente. "${e?.response?.data?.message || ''}"`
-    }
-  } finally {
-    loading.value = false
-  }
 }
 
 function selectAlternative(index) {

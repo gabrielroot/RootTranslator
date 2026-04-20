@@ -102,9 +102,9 @@ class TranslationService
                     );
                 }
 
-                $detections = array_first($response->json())['language'];
+                $language = array_first($response->json())['language'];
 
-                if (!$detections) {
+                if (!$language) {
                     throw new IntegrationException(
                         message: 'No language detected',
                         errorCode: IntegrationException::ERROR_NOT_FOUND,
@@ -114,10 +114,15 @@ class TranslationService
                     );
                 }
 
-                return $detections;
+                return $language;
             });
 
-            return IntegrationResponse::success($value);
+            return $this->translate([
+                'q' => $body['q'],
+                'source' => $value,
+                'target' => $body['to'],
+                'format' => 'text'
+            ]);
         } catch (IntegrationException $integrationException) {
             return IntegrationResponse::error(
                 message: $integrationException->getMessage(),
@@ -170,7 +175,10 @@ class TranslationService
                     );
                 }
 
-                return $response->json();
+                return array_merge(
+                    ['source' => $body['source']],
+                    $response->json()
+                );
             });
 
             return IntegrationResponse::success($value);
