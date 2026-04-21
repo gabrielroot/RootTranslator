@@ -1051,25 +1051,11 @@
   }
 
   .alternatives-container {
-    position: relative;
-    right: auto;
-    top: auto;
-    transform: none;
-    flex-direction: row;
-    justify-content: center;
-    margin-top: 0.5rem;
-    flex-shrink: 0;
+    display: none;
   }
 
   .action-section {
-    margin-top: 0.4rem;
-    flex-shrink: 0;
-  }
-
-  .translate-btn {
-    padding: 0.65rem 2rem;
-    font-size: 0.95rem;
-    border-radius: 12px;
+    display: none;
   }
 
   .footer {
