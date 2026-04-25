@@ -64,6 +64,7 @@ RUN apk add --no-cache \
     unzip \
     procps \
     linux-headers \
+    openssl-dev \
     $PHPIZE_DEPS
 
 # Configure and install PHP extensions
