@@ -57,6 +57,15 @@ artisan: ## Run Artisan command (use: make artisan c="migrate")
 npm: ## Run npm command (use: make npm c="run dev")
 	docker compose exec app npm $(c)
 
+octane-reload: ## Reload Octane workers
+	docker compose exec app php artisan octane:reload
+
+octane-status: ## Show Octane server status
+	docker compose exec app php artisan octane:status
+
+octane-stop: ## Stop Octane server
+	docker compose exec app php artisan octane:stop
+
 # ─── Project Setup ───────────────────────────────────────
 
 install: ## First time setup: install dependencies, generate key, run migrations

@@ -22,4 +22,16 @@ fi
 
 echo "✅ Application ready!"
 
-exec "$@"
+# If Octane is being used, start it instead of php-fpm
+if [ "$1" = "octane" ] || [ "$1" = "octane:start" ]; then
+    echo "🚀 Starting Laravel Octane with Swoole..."
+    
+    # Check if watch mode is requested via environment variable
+    if [ "$OCTANE_WATCH" = "true" ] && [ -f "/var/www/node_modules/.bin/chokidar" ]; then
+        php artisan octane:start --server=swoole --host=0.0.0.0 --port=8000 --watch
+    else
+        php artisan octane:start --server=swoole --host=0.0.0.0 --port=8000
+    fi
+else
+    exec "$@"
+fi

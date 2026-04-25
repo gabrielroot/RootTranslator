@@ -37,8 +37,8 @@ RUN apt-get update && apt-get install -y \
         intl \
         opcache \
         xml \
-    && pecl install redis \
-    && docker-php-ext-enable redis \
+    && pecl install redis swoole \
+    && docker-php-ext-enable redis swoole \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -67,7 +67,7 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 USER www-data
 
-EXPOSE 9000
+EXPOSE 8000
 
 ENTRYPOINT ["entrypoint.sh"]
-CMD ["php-fpm"]
+CMD ["octane"]
