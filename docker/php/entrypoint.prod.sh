@@ -39,4 +39,16 @@ fi
 
 echo "✅ Production environment ready!"
 
-exec "$@"
+# Start Octane with Swoole in production
+if [ "$1" = "octane" ] || [ "$1" = "octane:start" ]; then
+    echo "🚀 Starting Laravel Octane with Swoole (Production)..."
+    exec php artisan octane:start \
+        --server=swoole \
+        --host=0.0.0.0 \
+        --port=8000 \
+        --workers=${OCTANE_WORKERS:-auto} \
+        --task-workers=${OCTANE_TASK_WORKERS:-auto} \
+        --max-requests=${OCTANE_MAX_REQUESTS:-1000}
+else
+    exec "$@"
+fi

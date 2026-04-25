@@ -11,19 +11,19 @@
 
 # Laravel Docker Development Environment
 
-Ambiente de desenvolvimento Docker completo para Laravel.
+Ambiente de desenvolvimento Docker completo para Laravel com **Laravel Octane + Swoole**.
 
-## 📦 Stack
+## ⚡ Stack (Atualizado para Octane)
 
-| Serviço     | Versão    | Porta  |
-|-------------|-----------|--------|
-| PHP-FPM     | 8.4       | 9000   |
-| Nginx       | Alpine    | 80     |
-| MySQL       | 8.4       | 3306   |
-| Redis       | 7 Alpine  | 6379   |
-| Node.js     | 22        | —      |
-| phpMyAdmin  | latest    | 8080   |
-| Mailpit     | latest    | 8025   |
+| Serviço          | Versão    | Porta  | Status |
+|------------------|-----------|--------|--------|
+| Laravel Octane   | 2.x       | 8000   | ✅ |
+| PHP + Swoole     | 8.4       | —      | ✅ |
+| Redis            | 7 Alpine  | 6379   | ✅ |
+| Node.js          | 22        | —      | ✅ |
+| Mailpit          | latest    | 8025   | 🔧 |
+
+> **Nota**: Nginx foi removido. Octane/Swoole serve a aplicação diretamente na porta 8000 (mapeada para 80 no host).
 
 ## 🚀 Quick Start
 
@@ -100,6 +100,11 @@ make artisan c="migrate"              # Rodar Artisan
 make composer c="require package"     # Rodar Composer
 make npm c="run dev"                  # Rodar npm
 
+# Octane
+make octane-reload     # Reload Octane workers
+make octane-status     # Ver status do Octane
+make octane-stop       # Parar Octane server
+
 # Testes
 make test              # Rodar testes
 make test-coverage     # Testes com cobertura
@@ -167,6 +172,26 @@ Quando o profile `tools` estiver ativo, o Mailpit captura todos os e-mails envia
 - **Dashboard:** http://localhost:8025
 - **SMTP:** mailpit:1025
 
-## 🔒 Importante
+## ⚡ Laravel Octane + Swoole
 
-Este setup é **exclusivo para desenvolvimento**. Não use em produção sem as devidas adaptações de segurança.
+Este projeto usa **Laravel Octane com Swoole** para performance superior.
+
+### Benefícios:
+- 🚀 **3-5x mais rápido** que PHP-FPM tradicional
+- 💾 Aplicação persistente em memória
+- ⚡ Workers otimizados para alta concorrência
+- 🔄 Hot reload em desenvolvimento (com chokidar)
+
+### Documentação:
+- 📖 [Setup de Desenvolvimento](OCTANE_SETUP.md)
+- 🚀 [Deploy de Produção](OCTANE_PRODUCTION.md)
+
+### Configurações importantes:
+
+```env
+# .env
+OCTANE_SERVER=swoole
+OCTANE_WORKERS=auto              # Desenvolvimento
+# OCTANE_WORKERS=4               # Produção (ajuste conforme CPUs)
+# OCTANE_WATCH=true              # Requer: npm install --save-dev chokidar
+```

@@ -150,10 +150,12 @@ return [
     */
 
     'tables' => [
-        'example:1000' => [
-            'name' => 'string:1000',
-            'votes' => 'int',
-        ],
+        // Ex:
+        // 'users:10000' => [
+        //     'id' => 'int',
+        //     'name' => 'string:255',
+        //     'email' => 'string:255',
+        // ],
     ],
 
     /*
@@ -168,8 +170,8 @@ return [
     */
 
     'cache' => [
-        'rows' => 1000,
-        'bytes' => 10000,
+        'rows' => env('OCTANE_CACHE_ROWS', 10000),
+        'bytes' => env('OCTANE_CACHE_BYTES', 100000),
     ],
 
     /*
