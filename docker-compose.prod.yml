@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/gabrielroot/roottranslator:latest
+    image: ghcr.io/gabrielroot/roottranslator:octane
     pull_policy: always
     container_name: ${APP_NAME:-laravel}_app_prod
     restart: unless-stopped

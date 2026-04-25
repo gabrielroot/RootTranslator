@@ -78,10 +78,14 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
         zip \
         intl \
         opcache \
-        xml \
-    && pecl install redis swoole \
-    && docker-php-ext-enable redis swoole \
-    && apk del $PHPIZE_DEPS linux-headers \
+        xml
+
+# Install PECL extensions (redis and swoole)
+RUN pecl install redis swoole \
+    && docker-php-ext-enable redis swoole
+
+# Clean up build dependencies
+RUN apk del $PHPIZE_DEPS linux-headers \
     && rm -rf /tmp/* /var/cache/apk/*
 
 # Production PHP configuration
