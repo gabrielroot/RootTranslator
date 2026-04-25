@@ -4,8 +4,8 @@ services:
     pull_policy: always
     container_name: ${APP_NAME:-laravel}_app_prod
     restart: unless-stopped
-    ports:
-      - "80:8000"
+    # ports:
+    #   - "80:8000"
     volumes:
       - app_storage:/var/www/storage
     networks:

@@ -45,7 +45,7 @@ if [ "$1" = "octane" ] || [ "$1" = "octane:start" ]; then
     exec php artisan octane:start \
         --server=swoole \
         --host=0.0.0.0 \
-        --port=8000 \
+        --port=80 \
         --workers=${OCTANE_WORKERS:-auto} \
         --task-workers=${OCTANE_TASK_WORKERS:-auto} \
         --max-requests=${OCTANE_MAX_REQUESTS:-1000}

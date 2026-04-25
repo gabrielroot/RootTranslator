@@ -1,6 +1,6 @@
 FROM node:22-slim AS node
 
-FROM php:8.4-fpm
+FROM php:8.4-cli
 
 ARG UID=1000
 ARG GID=1000
@@ -67,7 +67,7 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 USER www-data
 
-EXPOSE 8000
+EXPOSE 80
 
 ENTRYPOINT ["entrypoint.sh"]
 CMD ["octane"]
