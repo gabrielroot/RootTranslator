@@ -3,6 +3,7 @@
 namespace App\DTO;
 
 use App\Exceptions\IntegrationException;
+use Carbon\Traits\Timestamp;
 
 /**
  * DTO para padronizar respostas de integrações externas.
@@ -27,6 +28,7 @@ class IntegrationResponse
     private ?string $errorCode;
     private ?int $httpStatusCode;
     private ?array $meta;
+    private \DateTime $timestamp;
 
     private function __construct(
         bool $success,
@@ -42,8 +44,8 @@ class IntegrationResponse
         $this->errorCode = $errorCode;
         $this->httpStatusCode = $httpStatusCode;
         $this->meta = $meta;
+        $this->timestamp = new \DateTime();
     }
-
     /**
      * Cria uma resposta de sucesso.
      */
@@ -139,6 +141,11 @@ class IntegrationResponse
         return $this->meta;
     }
 
+    public function getTimestamp(): \DateTime
+    {
+        return $this->timestamp;
+    }
+
     /**
      * Converte para array.
      */
@@ -151,6 +158,7 @@ class IntegrationResponse
             'error_code' => $this->errorCode,
             'http_status_code' => $this->httpStatusCode,
             'meta' => $this->meta,
+            'timestamp' => $this->timestamp->format('c'),
         ], fn($value) => $value !== null);
     }
 

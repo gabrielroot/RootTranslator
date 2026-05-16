@@ -70,13 +70,20 @@ class TranslationService
                 httpStatusCode: 500,
                 context: ['endpoint' => $this->getBaseUrl() . '/languages', 'exception' => $exception]
             ));
+        } catch (\Throwable $exception) {
+            return IntegrationResponse::fromException(new IntegrationException(
+                message: 'Ocorreu um erro no servidor durante o processamento',
+                errorCode: IntegrationException::ERROR_SERVER_ERROR,
+                httpStatusCode: 500,
+                context: ['endpoint' => $this->getBaseUrl() . '/languages', 'exception' => $exception]
+            ));
         }
     }
 
     /**
      * Detecta o idioma de um texto.
      *
-     * @param array $data
+     * @param array $body
      * @return IntegrationResponse
      */
     public function detectLanguage(array $body): IntegrationResponse
@@ -138,7 +145,14 @@ class TranslationService
                 message: 'Erro inesperado durante a tradução',
                 errorCode: IntegrationException::ERROR_SERVER_ERROR,
                 httpStatusCode: 500,
-                context: ['body' => $body, 'endpoint' => $this->getBaseUrl() . '/detect', 'exception' => $exception]
+                context: ['body' => $body, 'endpoint' => '/detect', 'exception' => $exception]
+            ));
+        } catch (\Throwable $exception) {
+            return IntegrationResponse::fromException(new IntegrationException(
+                message: 'Ocorreu um erro no servidor durante o processamento',
+                errorCode: IntegrationException::ERROR_SERVER_ERROR,
+                httpStatusCode: 500,
+                context: ['endpoint' => '/languages', 'exception' => $exception]
             ));
         }
     }
@@ -197,7 +211,14 @@ class TranslationService
                 message: 'Erro inesperado durante a tradução',
                 errorCode: IntegrationException::ERROR_SERVER_ERROR,
                 httpStatusCode: 500,
-                context: ['body' => $body, 'endpoint' => $this->getBaseUrl() . '/detect', 'exception' => $exception]
+                context: ['body' => $body, 'endpoint' => '/detect', 'exception' => $exception]
+            ));
+        } catch (\Throwable $exception) {
+            return IntegrationResponse::fromException(new IntegrationException(
+                message: 'Ocorreu um erro no servidor durante o processamento',
+                errorCode: IntegrationException::ERROR_SERVER_ERROR,
+                httpStatusCode: 500,
+                context: ['endpoint' => '/languages', 'exception' => $exception]
             ));
         }
     }
@@ -211,9 +232,9 @@ class TranslationService
                 httpStatusCode: 429,
                 context: ['key' => $key]
             );
-        } else {
-            RateLimiter::hit($key, 60 * 1); // Limite de 20 tentativas por minuto
         }
+
+        RateLimiter::hit($key, 60 * 1); // Limite de 20 tentativas por minuto
     }
     public function validateInputSize(string $text): void
     {

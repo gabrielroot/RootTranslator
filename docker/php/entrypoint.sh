@@ -24,13 +24,15 @@ echo "✅ Application ready!"
 
 # If Octane is being used, start it instead of php-fpm
 if [ "$1" = "octane" ] || [ "$1" = "octane:start" ]; then
-    echo "🚀 Starting Laravel Octane with Swoole..."
+    echo "🚀 Starting Laravel Octane with Swoole..." >&2
     
     # Check if watch mode is requested via environment variable
-    if [ "$OCTANE_WATCH" = "true" ] && [ -f "/var/www/node_modules/.bin/chokidar" ]; then
-        php artisan octane:start --server=swoole --host=0.0.0.0 --port=8000 --watch
+    if [ "$OCTANE_WATCH" = "true" ]; then
+        echo "👀 Watch mode enabled - auto-reloading on file changes" >&2
+        exec php artisan octane:start --server=swoole --host=0.0.0.0 --port=8000 --watch
     else
-        php artisan octane:start --server=swoole --host=0.0.0.0 --port=8000
+        echo "⚠️  Watch mode disabled - manual reload required for code changes" >&2
+        exec php artisan octane:start --server=swoole --host=0.0.0.0 --port=8000
     fi
 else
     exec "$@"

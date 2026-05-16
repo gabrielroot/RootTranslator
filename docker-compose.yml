@@ -21,6 +21,7 @@ services:
         condition: service_healthy
     environment:
       - OCTANE_SERVER=swoole
+      - OCTANE_WATCH=true  # Auto-reload em desenvolvimento
 
   # Redis Cache
   redis:

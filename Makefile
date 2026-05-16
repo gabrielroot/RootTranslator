@@ -66,6 +66,13 @@ octane-status: ## Show Octane server status
 octane-stop: ## Stop Octane server
 	docker compose exec app php artisan octane:stop
 
+octane-watch-status: ## Check if watch mode is enabled
+	@echo "$(GREEN)Checking Octane watch status...$(RESET)"
+	@docker compose exec app sh -c 'if [ "$$OCTANE_WATCH" = "true" ]; then echo "$(GREEN)✅ Watch mode: ENABLED$(RESET)"; else echo "$(YELLOW)⚠️  Watch mode: DISABLED$(RESET)"; fi'
+	@echo ""
+	@echo "To see if watcher is running, check logs:"
+	@echo "  $(YELLOW)docker compose logs app | grep -i watch$(RESET)"
+
 # ─── Project Setup ───────────────────────────────────────
 
 install: ## First time setup: install dependencies, generate key, run migrations
