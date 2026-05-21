@@ -43,6 +43,8 @@ class IntegrationException extends \Exception
             code: $httpStatusCode ?? 500,
             previous: $previous
         );
+//TODO: CRIAR EXCEÇÕES CUSTOMIZADAS PARA EXCEPTION E THROWABLE, ADICIONANDO O SENTRY
+        \Sentry\captureException($this);
     }
 
     public function getErrorCode(): string

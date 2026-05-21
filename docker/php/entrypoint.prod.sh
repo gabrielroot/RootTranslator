@@ -17,14 +17,6 @@ if [ "$(id -u)" = "0" ]; then
     chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 fi
 
-# # Verify build assets exist
-# if [ ! -f "/var/www/public/build/manifest.json" ]; then
-#     echo "⚠️  WARNING: manifest.json not found in /var/www/public/build/"
-#     echo "   Frontend assets may not load correctly."
-#     echo "   Contents of /var/www/public/build/:"
-#     ls -la /var/www/public/build/ 2>/dev/null || echo "   Directory does not exist!"
-# fi
-
 # Cache configuration for production
 echo "⚡ Optimizing for production..."
 php artisan config:cache
