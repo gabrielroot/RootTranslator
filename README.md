@@ -130,7 +130,7 @@ make destroy           # Destruir tudo (CUIDADO!)
 │   └── nginx/
 │       └── default.conf      # Configuração do Nginx
 ├── docker-compose.yml        # Orquestração dos serviços
-├── .env.docker               # Variáveis do Docker
+├── .env.sample               # Renomeie para .env
 ├── .dockerignore             # Arquivos ignorados no build
 └── Makefile                  # Atalhos de comandos
 ```
@@ -139,7 +139,7 @@ make destroy           # Destruir tudo (CUIDADO!)
 
 ### Alterar portas
 
-Edite o arquivo `.env.docker` (ou `.env` na raiz):
+Edite o arquivo `.env.sample` (ou `.env` na raiz):
 
 ```env
 APP_PORT=8000       # Porta do Nginx (default: 80)
