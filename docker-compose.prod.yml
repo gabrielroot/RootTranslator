@@ -1,5 +1,5 @@
 services:
-  app:
+  app_rootranslator:
     image: ghcr.io/gabrielroot/roottranslator:main
     pull_policy: always
     restart: unless-stopped
@@ -11,7 +11,7 @@ services:
       - laravel_prod
       - dokploy-network 
     depends_on:
-      - redis
+      - redis_rootranslator
     env_file:
       - .env
     healthcheck:
@@ -21,7 +21,7 @@ services:
       retries: 5
       start_period: 30s
 
-  redis:
+  redis_rootranslator:
     image: redis:7-alpine
     restart: unless-stopped
     command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
@@ -53,7 +53,7 @@ services:
   #   depends_on:
   #     app:
   #       condition: service_healthy
-  #     redis:
+  #     redis_rootranslator:
   #       condition: service_healthy
   #   deploy:
   #     resources:
