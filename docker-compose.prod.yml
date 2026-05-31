@@ -7,7 +7,6 @@ services:
     volumes:
       - app_storage:/var/www/storage
     networks:
-      - laravel_prod
       - dokploy-network 
     depends_on:
       - redis_rootranslator
@@ -117,7 +116,6 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - laravel_prod
       - dokploy-network 
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -187,8 +185,6 @@ services:
   #       condition: service_healthy
 
 networks:
-  laravel_prod:
-    driver: bridge
   dokploy-network:
     external: true
     name: dokploy-network
