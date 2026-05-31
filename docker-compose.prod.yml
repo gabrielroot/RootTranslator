@@ -1,7 +1,6 @@
 services:
   app_rootranslator:
     image: ${APP_IMAGE}
-    pull_policy: always
     restart: unless-stopped
     expose:
       - "80"
