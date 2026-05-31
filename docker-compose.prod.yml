@@ -1,6 +1,6 @@
 services:
   app_rootranslator:
-    image: ghcr.io/gabrielroot/roottranslator:main
+    image: ${APP_IMAGE}
     pull_policy: always
     restart: unless-stopped
     expose:
@@ -12,22 +12,102 @@ services:
       - dokploy-network 
     depends_on:
       - redis_rootranslator
-    env_file:
-      - .env
+    environment:
+      - LIBRETRANSLATE_HOST=${LIBRETRANSLATE_HOST}
+      - LIBRETRANSLATE_KEY=${LIBRETRANSLATE_KEY}
+      - APP_NAME=${APP_NAME}
+      - APP_ENV=${APP_ENV}
+      - APP_KEY=${APP_KEY}
+      - APP_DEBUG=${APP_DEBUG}
+      - APP_URL=${APP_URL}
+      - ASSET_URL=${ASSET_URL}
+      - APP_LOCALE=${APP_LOCALE}
+      - APP_FALLBACK_LOCALE=${APP_FALLBACK_LOCALE}
+      - APP_FAKER_LOCALE=${APP_FAKER_LOCALE}
+      - APP_MAINTENANCE_DRIVER=${APP_MAINTENANCE_DRIVER}
+      - BCRYPT_ROUNDS=${BCRYPT_ROUNDS}
+      - LOG_CHANNEL=${LOG_CHANNEL}
+      - LOG_STACK=${LOG_STACK}
+      - LOG_DEPRECATIONS_CHANNEL=${LOG_DEPRECATIONS_CHANNEL}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - DB_CONNECTION=${DB_CONNECTION}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - AUTO_MIGRATE=${AUTO_MIGRATE}
+      - SESSION_DRIVER=${SESSION_DRIVER}
+      - SESSION_LIFETIME=${SESSION_LIFETIME}
+      - SESSION_ENCRYPT=${SESSION_ENCRYPT}
+      - SESSION_PATH=${SESSION_PATH}
+      - SESSION_DOMAIN=${SESSION_DOMAIN}
+      - BROADCAST_CONNECTION=${BROADCAST_CONNECTION}
+      - FILESYSTEM_DISK=${FILESYSTEM_DISK}
+      - QUEUE_CONNECTION=${QUEUE_CONNECTION}
+      - CACHE_STORE=${CACHE_STORE}
+      - MEMCACHED_HOST=${MEMCACHED_HOST}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_URL=${REDIS_URL}
+      - REDIS_CLIENT=${REDIS_CLIENT}
+      - REDIS_USERNAME=${REDIS_USERNAME}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_PORT=${REDIS_PORT}
+      - MAIL_MAILER=${MAIL_MAILER}
+      - MAIL_SCHEME=${MAIL_SCHEME}
+      - MAIL_HOST=${MAIL_HOST}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS}
+      - MAIL_FROM_NAME=${MAIL_FROM_NAME}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+      - AWS_BUCKET=${AWS_BUCKET}
+      - AWS_USE_PATH_STYLE_ENDPOINT=${AWS_USE_PATH_STYLE_ENDPOINT}
+      - VITE_APP_NAME=${VITE_APP_NAME}
+      - VITE_HOST=${VITE_HOST}
+      - SERVICE_FQDN_NGINX=${SERVICE_FQDN_NGINX}
+      - SERVICE_URL_NGINX=${SERVICE_URL_NGINX}
+      - SERVICE_URL_APP=${SERVICE_URL_APP}
+      - SERVICE_FQDN_APP=${SERVICE_FQDN_APP}
+      - OCTANE_SERVER=${OCTANE_SERVER}
+      - OCTANE_WORKERS=${OCTANE_WORKERS}
+      - OCTANE_TASK_WORKERS=${OCTANE_TASK_WORKERS}
+      - OCTANE_MAX_REQUESTS=${OCTANE_MAX_REQUESTS}
+      - OCTANE_CACHE_ROWS=${OCTANE_CACHE_ROWS}
+      - OCTANE_CACHE_BYTES=${OCTANE_CACHE_BYTES}
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://127.0.0.1:80/up || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 2
+        delay: 10s
+        failure_action: rollback
+        max_failure_ratio: 0.25
+        order: start-first
+      rollback_config:
+        parallelism: 3
+        delay: 5s
+        order: start-first
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
 
   redis_rootranslator:
     image: redis:7-alpine
     restart: unless-stopped
     expose:
         - '6379'
-    env_file:
-        - .env
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     command: >
         redis-server
         --save 20 1
@@ -35,8 +115,6 @@ services:
         --maxmemory-policy allkeys-lru
         --requirepass ${REDIS_PASSWORD}
         --loglevel warning
-    environment:
-        - REDIS_PASSWORD=${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
     networks:
@@ -47,7 +125,25 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == heart
+      update_config:
+        parallelism: 2
+        delay: 10s
+        failure_action: rollback
+        max_failure_ratio: 0.25
+        order: start-first
+      rollback_config:
+        parallelism: 3
+        delay: 5s
+        order: start-first
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
   # ---------------------------------------------------------------------------
   # Queue Worker (para quando implementar filas)
   # ---------------------------------------------------------------------------
